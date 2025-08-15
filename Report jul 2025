@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Performance Report - Flowtec</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root{
+            /* Brand blend: TIF (navy) + Flowtec (plumbing blue) */
+            --tif-navy: #0b2545; /* deep navy for agency tone */
+            --flowtec-blue: #0077b6; /* plumbing / water blue */
+            --accent: #00b4d8; /* bright aqua accent */
+            --muted: #f7f6f3;
+            --card: #ffffff;
+            --text: #1f2937;
+            --subtle: #64748b;
+            --glass: rgba(255,255,255,0.6);
+        }
+        html,body{height:100%}
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            background: linear-gradient(180deg,var(--muted) 0%, #fbfcfd 100%);
+            color: var(--text);
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            line-height:1.45;
+        }
+
+        /* Top brand header */
+        header.brandbar{
+            background: linear-gradient(90deg,var(--tif-navy) 0%, rgba(11,37,69,0.9) 40%, rgba(0,119,182,0.9) 100%);
+            color: white;
+            backdrop-filter: blur(6px);
+        }
+        .brand-wrap{display:flex;gap:1rem;align-items:center}
+        .brand-badge{
+            display:flex;align-items:center;gap:.6rem;padding:.45rem .65rem;border-radius:0.6rem;background:rgba(255,255,255,0.06);
+            border:1px solid rgba(255,255,255,0.06);
+        }
+        .brand-badge img{height:28px;width:auto;display:block}
+        .brand-badge .brand-text{font-weight:700;font-family:'Poppins',sans-serif;font-size:0.95rem;letter-spacing:0.2px}
+
+        /* Nav links */
+        .nav-link{color:rgba(255,255,255,0.9);opacity:.95}
+        .nav-link:hover{color:var(--accent);text-decoration:underline}
+
+        /* Container tweaks */
+        main.container{max-width:1100px}
+
+        /* KPI cards */
+        .kpi-card{
+            background: linear-gradient(180deg,var(--card), #fbfbfd);
+            border-radius: 12px;
+            padding:1.3rem;
+            box-shadow: 0 6px 18px rgba(11,37,69,0.06);
+            border:1px solid rgba(11,37,69,0.04);
+            transition:transform .18s ease, box-shadow .18s;
+        }
+        .kpi-card:hover{transform:translateY(-6px);box-shadow:0 18px 35px rgba(11,37,69,0.08)}
+        .kpi-value{color:var(--tif-navy)}
+        .kpi-trend{color:#16a34a}
+
+        /* Sections */
+        section h2{font-family:'Poppins',sans-serif;color:var(--tif-navy)}
+        .panel{background:var(--card);padding:1.5rem;border-radius:14px;border:1px solid rgba(15,23,42,0.04);box-shadow:0 8px 20px rgba(15,23,42,0.04)}
+
+        /* Tables */
+        table{border-collapse:collapse;font-size:0.95rem}
+        th{background:linear-gradient(180deg, rgba(3,37,76,0.03), rgba(3,37,76,0.01));}
+        thead th{position:sticky;top:0}
+
+        /* Accordion */
+        .accordion-item{overflow:hidden}
+        .accordion-header{background:linear-gradient(90deg, rgba(0,119,182,0.05), rgba(11,37,69,0.02));border-radius:10px}
+        .accordion-header span{display:inline-block;transition:transform .25s ease}
+        .accordion-content{max-height:0;overflow:hidden;transition:max-height .28s ease}
+
+        /* Footer small */
+        .report-meta{font-size:0.9rem;color:var(--subtle)}
+
+        /* Responsive tweaks */
+        @media (max-width:768px){
+            .brand-badge .brand-text{display:none}
+            .kpi-value{font-size:2.15rem}
+        }
+
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="brandbar sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="brand-wrap">
+                <!-- Left: TIF agency feel -->
+                <a href="https://tifagency.com" target="_blank" rel="noopener" class="brand-badge" aria-label="TIF Agency">
+                    <!-- fallback text logo; replace with actual SVG/logo URL if available -->
+                    <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(180deg,var(--tif-navy),rgba(11,37,69,0.85));display:flex;align-items:center;justify-content:center;color:white;font-weight:700">TIF</div>
+                    <div class="brand-text">TIF Agency</div>
+                </a>
+
+                <!-- Vertical separator -->
+                <div style="width:1px;height:36px;background:rgba(255,255,255,0.08)"></div>
+
+                <!-- Right: Flowtec brand -->
+                <a href="https://flowtecplumbingandgas.com.au" target="_blank" rel="noopener" class="brand-badge" aria-label="Flowtec Plumbing and Gas">
+                    <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(180deg,var(--flowtec-blue),#005b8f);display:flex;align-items:center;justify-content:center;color:white;font-weight:700">FT</div>
+                    <div class="brand-text">Flowtec</div>
+                </a>
+            </div>
+
+            <div class="hidden md:flex space-x-8">
+                <a href="#summary" class="nav-link font-medium">Summary</a>
+                <a href="#performance" class="nav-link font-medium">Performance</a>
+                <a href="#seo" class="nav-link font-medium">SEO Visibility</a>
+                <a href="#recommendations" class="nav-link font-medium">Recommendations</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="summary" class="mb-20 text-center">
+            <h2 class="text-4xl font-bold mb-4">Digital Performance Analysis: July 2025</h2>
+            <p class="text-lg max-w-3xl mx-auto mb-12 text-gray-600">July was a month of key growth, driven by a strong organic strategy that increased quality traffic and generated more business opportunities, successfully compensating for the cessation of advertising investment.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="kpi-card">
+                    <h3 class="text-lg font-semibold text-gray-500">Total Conversions</h3>
+                    <p class="text-5xl font-bold my-2 kpi-value">22</p>
+                    <p class="text-xl font-medium kpi-trend">+57.1%</p>
+                    <p class="text-sm text-gray-400">vs. June 2025</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 class="text-lg font-semibold text-gray-500">Total Sessions</h3>
+                    <p class="text-5xl font-bold my-2 kpi-value">370</p>
+                    <p class="text-xl font-medium kpi-trend">+14.9%</p>
+                    <p class="text-sm text-gray-400">vs. June 2025</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 class="text-lg font-semibold text-gray-500">Engagement Rate</h3>
+                    <p class="text-5xl font-bold my-2 kpi-value">70%</p>
+                    <p class="text-xl font-medium kpi-trend">+7.0 pts</p>
+                    <p class="text-sm text-gray-400">vs. June 2025</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="performance" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-2">Overall Website Performance</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto mb-12 text-gray-600">This section breaks down key site metrics, from visit volume to its effectiveness in converting that traffic into potential customers, revealing the most important sources of growth.</p>
+
+            <div class="panel">
+                <div class="chart-container" style="height:420px;">
+                    <canvas id="kpiComparisonChart"></canvas>
+                </div>
+                <div class="mt-8 text-center">
+                    <h3 class="text-xl font-semibold mb-2">Sustained Growth in Key Metrics</h3>
+                    <p class="max-w-2xl mx-auto text-gray-600">The 27.6% growth in "Engaged Sessions" is particularly noteworthy as it outpaces the increase in total sessions. This indicates an improvement in traffic quality: visitors are not only more numerous, but they are more interested and engaged with the content.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
+                <div class="panel">
+                    <h3 class="text-xl font-semibold text-center mb-4">Traffic Acquisition Channels</h3>
+                    <div class="chart-container" style="height:350px;">
+                        <canvas id="trafficChannelsChart"></canvas>
+                    </div>
+                    <div class="mt-8 text-center">
+                         <p class="max-w-2xl mx-auto text-gray-600">Organic Search not only grew by 18.5% but its robustness compensated for the elimination of 56 paid sessions from June, driving the site's overall growth. This demonstrates a positive and sustainable ROI from the SEO strategy.</p>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h3 class="text-xl font-semibold text-center mb-4">Conversion Breakdown (July)</h3>
+                     <div class="chart-container" style="height:350px;">
+                        <canvas id="conversionsChart"></canvas>
+                    </div>
+                    <div class="mt-8 text-center">
+                        <p class="max-w-2xl mx-auto text-gray-600">The nature of conversions evolved. July saw the emergence of 4 direct contact actions (calls and emails), which were not recorded in June. This indicates the site is now capturing leads with more immediate purchase intent.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="seo" class="mb-20">
+            <h2 class="text-3xl font-bold text-center mb-2">SEO Visibility & Health</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto mb-12 text-gray-600">A deep dive into Google Search Console data to understand search results performance, the queries that attract users, and the pages that capitalize on that traffic.</p>
+
+            <div class="panel mb-12">
+                 <h3 class="text-2xl font-semibold text-center mb-6">Organic Search Macro Trends</h3>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                    <div>
+                        <p class="text-4xl font-bold text-['var(--tif-navy)']">82</p>
+                        <p class="font-semibold">Total Clicks <span class="text-green-600 font-bold">(+28.1%)</span></p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-bold text-['var(--tif-navy)']">34,320</p>
+                        <p class="font-semibold">Total Impressions <span class="text-green-600 font-bold">(+4.5%)</span></p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-bold text-['var(--tif-navy)']">54.3</p>
+                        <p class="font-semibold">Average Position <span class="text-red-600 font-bold">(-2.8)</span></p>
+                    </div>
+                 </div>
+                 <div class="mt-6 pt-6 border-t border-gray-200">
+                    <p class="text-center text-gray-600 max-w-3xl mx-auto">The slight decline in average position is a positive leading indicator. It's caused by the site starting to rank for a wider range of new keywords, which initially appear in lower positions but expand the overall keyword footprint for future growth.</p>
+                 </div>
+            </div>
+
+            <div class="panel mb-12">
+                <h3 class="text-2xl font-semibold text-center mb-6">Search Query Opportunities</h3>
+                <p class="text-center text-gray-600 max-w-3xl mx-auto mb-6">The table below shows high-volume, commercially relevant queries that are generating thousands of impressions but few clicks due to low rankings. This represents a proven market demand that is not currently being capitalized on.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left" id="queriesTable">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-4 font-semibold">Search Query</th>
+                                <th class="p-4 font-semibold cursor-pointer" data-sort="impressions">Impressions (July) &#x2195;</th>
+                                <th class="p-4 font-semibold cursor-pointer" data-sort="clicks">Clicks (July) &#x2195;</th>
+                                <th class="p-4 font-semibold cursor-pointer" data-sort="position">Position (July) &#x2195;</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="panel">
+                    <h3 class="text-xl font-semibold text-center mb-4">Keyword Cannibalization Issue</h3>
+                    <p class="text-gray-600 mb-6">A blog post is outperforming the main service page for "hot water system" queries. This risks losing conversions, as the blog is informational while the service page is transactional.</p>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <p class="font-bold text-lg">Blog Post</p>
+                            <p class="text-3xl font-bold text-green-600">5</p>
+                            <p>Clicks (from 0)</p>
+                        </div>
+                        <div>
+                            <p class="font-bold text-lg">Service Page</p>
+                            <p class="text-3xl font-bold text-red-600">0</p>
+                            <p>Clicks (from 1)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h3 class="text-xl font-semibold text-center mb-4">Technical SEO Win: 404 Errors Fixed</h3>
+                    <p class="text-gray-600 mb-6">A critical fix was implemented. In June, the "Page not found" error was the second most viewed page, leaking significant traffic. This has been resolved.</p>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <p class="font-bold text-lg">June</p>
+                            <p class="text-3xl font-bold text-red-600">116</p>
+                            <p>Error Page Views</p>
+                        </div>
+                        <div>
+                            <p class="font-bold text-lg">July</p>
+                            <p class="text-3xl font-bold text-green-600">7</p>
+                            <p>Error Page Views</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="recommendations">
+            <h2 class="text-3xl font-bold text-center mb-2">Strategic Recommendations for August</h2>
+            <p class="text-lg text-center max-w-3xl mx-auto mb-12 text-gray-600">This action plan synthesizes the report's analysis into clear, prioritized steps to capitalize on successes, address opportunities, and drive measurable growth.</p>
+            <div class="space-y-4 max-w-4xl mx-auto">
+                <!-- Accordion items intentionally unchanged content-wise. -->
+                <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full flex justify-between items-center text-left p-6 font-semibold text-lg">
+                        1. Launch Content Campaign for Non-Branded Keywords
+                        <span class="transform transition-transform duration-300">&#9662;</span>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <p class="text-gray-600"><strong>Justification:</strong> There is significant search demand for high-value service terms where Flowtec has low rankings. Capturing this traffic is the largest growth opportunity.</p>
+                        <p class="text-gray-600 mt-2"><strong>Action:</strong> Create dedicated, SEO-optimized content for priority targets like "Blocked Sewer Drain Adelaide," "Hot Water Systems Adelaide," and "Emergency Plumbing Adelaide" to establish authority and improve rankings.</p>
+                    </div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full flex justify-between items-center text-left p-6 font-semibold text-lg">
+                        2. Resolve "Hot Water System" Keyword Cannibalization
+                        <span class="transform transition-transform duration-300">&#9662;</span>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <p class="text-gray-600"><strong>Justification:</strong> An informational blog post is outranking the transactional service page, potentially costing direct conversions.</p>
+                        <p class="text-gray-600 mt-2"><strong>Action:</strong> Enhance the on-page SEO of the main service page to reinforce its transactional intent. Simultaneously, add prominent calls-to-action and internal links from the blog post to the service page, creating a clear user journey from information to action.</p>
+                    </div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full flex justify-between items-center text-left p-6 font-semibold text-lg">
+                        3. Expand Hyperlocal SEO Efforts
+                        <span class="transform transition-transform duration-300">&#9662;</span>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <p class="text-gray-600"><strong>Justification:</strong> The success with the "plumber adelaide hills" query proves that a localized strategy is highly effective for capturing high-intent customers in specific service areas.</p>
+                        <p class="text-gray-600 mt-2"><strong>Action:</strong> Replicate this model for other key suburbs identified in search data (e.g., Hahndorf, Stirling, Mount Barker). Create location-specific content on service pages or blog posts to improve relevance for "near me" searches.</p>
+                    </div>
+                </div>
+                 <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full flex justify-between items-center text-left p-6 font-semibold text-lg">
+                        4. Implement Continuous SEO Monitoring and Adaptation
+                        <span class="transform transition-transform duration-300">&#9662;</span>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <p class="text-gray-600"><strong>Justification:</strong> The digital landscape is constantly changing due to search engine algorithm updates and evolving competitor strategies. Proactive monitoring is essential to protect and build upon recent SEO gains.</p>
+                        <p class="text-gray-600 mt-2"><strong>Action:</strong> Establish a monthly monitoring process. This includes tracking keyword ranking changes for priority terms, analyzing competitor strategies, and staying informed on major Google algorithm updates. This allows for agile strategy adjustments, ensuring Flowtec can react quickly to both threats and opportunities.</p>
+                    </div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full flex justify-between items-center text-left p-6 font-semibold text-lg">
+                        5. Launch a "Plumbing First" Targeted Ad Strategy
+                        <span class="transform transition-transform duration-300">&#9662;</span>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <p class="text-gray-600"><strong>Justification:</strong> While the long-term SEO strategy is building a sustainable asset, there is an immediate opportunity to capture high-intent leads for core services. A focused, small-scale paid advertising campaign can bridge the gap while organic rankings improve.</p>
+                        <p class="text-gray-600 mt-2"><strong>Action:</strong> Develop a highly targeted search ad campaign focused exclusively on plumbing-related keywords with strong commercial intent (e.g., "emergency plumber adelaide," "blocked drain plumber"). The campaign should use geo-targeting to focus on key service areas and direct all traffic to the relevant, high-converting service pages, not the homepage. This ensures maximum ROI by targeting users who are actively seeking immediate solutions.</p>
+                    </div>
+                </div>
+                <div class="accordion-item bg-white rounded-lg shadow-lg">
+                    <button class="accordion-header w-full flex justify-between items-center text-left p-6 font-semibold text-lg">
+                        6. Integrate SEO Best Practices into the Content Workflow
+                        <span class="transform transition-transform duration-300">&#9662;</span>
+                    </button>
+                    <div class="accordion-content px-6 pb-6">
+                        <p class="text-gray-600"><strong>Justification:</strong> To maximize the long-term value of content marketing, every new blog post must be optimized for search from the moment it is published.</p>
+                        <p class="text-gray-600 mt-2"><strong>Action:</strong> Create and implement a pre-publication SEO checklist for all new blog content. This checklist should include essential on-page SEO elements such as keyword research, optimized title tags and meta descriptions, proper heading structure (H1, H2s), image alt text, and internal linking to relevant service pages. This process will ensure that new content contributes effectively to organic visibility from day one.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartColors = {
+                june: 'rgba(140,146,166,0.7)',
+                july: 'rgba(7,119,182,0.92)',
+                julyBorder: 'rgba(0,93,140,1)',
+                form: 'rgba(11,37,69,0.9)',
+                call: 'rgba(0,180,216,0.95)',
+                email: 'rgba(160,235,245,0.9)'
+            };
+
+            const kpiData = {
+                labels: ['Sessions', 'Engaged Sessions', 'Total Conversions'],
+                datasets: [
+                    {
+                        label: 'June 2025',
+                        data: [322, 203, 14],
+                        backgroundColor: chartColors.june,
+                        borderColor: 'rgba(119,124,150,1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'July 2025',
+                        data: [370, 259, 22],
+                        backgroundColor: chartColors.july,
+                        borderColor: chartColors.julyBorder,
+                        borderWidth: 1
+                    }
+                ]
+            };
+            const kpiCtx = document.getElementById('kpiComparisonChart').getContext('2d');
+            new Chart(kpiCtx, {
+                type: 'bar',
+                data: kpiData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, grid: {color:'rgba(15,23,42,0.04)'} }, x: { grid: {display:false} } },
+                    plugins: { legend: { position: 'top' }, tooltip: {mode:'index',intersect:false} }
+                }
+            });
+
+            const trafficData = {
+                labels: ['Organic Search', 'Direct', 'Paid Channels'],
+                datasets: [
+                    {
+                        label: 'June 2025',
+                        data: [157, 108, 56],
+                        backgroundColor: chartColors.june,
+                    },
+                    {
+                        label: 'July 2025',
+                        data: [186, 105, 1],
+                        backgroundColor: chartColors.july,
+                    }
+                ]
+            };
+            const trafficCtx = document.getElementById('trafficChannelsChart').getContext('2d');
+            new Chart(trafficCtx, {
+                type: 'bar',
+                data: trafficData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, stacked: false, grid:{color:'rgba(15,23,42,0.04)'} }, x: { stacked: false } },
+                    plugins: { legend: { position: 'top' }, tooltip:{mode:'index',intersect:false} }
+                }
+            });
+
+            const conversionData = {
+                labels: ['Form Start', 'Call Click', 'Email Click'],
+                datasets: [{
+                    label: 'Conversions in July',
+                    data: [18, 3, 1],
+                    backgroundColor: [chartColors.form, chartColors.call, chartColors.email],
+                    hoverOffset: 6
+                }]
+            };
+            const conversionCtx = document.getElementById('conversionsChart').getContext('2d');
+            new Chart(conversionCtx, {
+                type: 'doughnut',
+                data: conversionData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } }
+                }
+            });
+
+            const queriesData = [
+                { query: 'plumber adelaide', impressions: 1279, clicks: 1, position: 86.91 },
+                { query: 'hot water adelaide', impressions: 667, clicks: 0, position: 77.34 },
+                { query: 'blocked sewer drain', impressions: 558, clicks: 0, position: 75.44 },
+                { query: 'leak detection adelaide', impressions: 301, clicks: 1, position: 33.01 },
+                { query: 'emergency plumbing adelaide', impressions: 250, clicks: 0, position: 83.58 }
+            ];
+
+            const tableBody = document.querySelector('#queriesTable tbody');
+            let currentSort = { key: 'impressions', order: 'desc' };
+
+            const renderTable = () => {
+                tableBody.innerHTML = '';
+                const sortedData = [...queriesData].sort((a, b) => {
+                    if (a[currentSort.key] < b[currentSort.key]) return currentSort.order === 'asc' ? -1 : 1;
+                    if (a[currentSort.key] > b[currentSort.key]) return currentSort.order === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                sortedData.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b hover:bg-gray-50';
+                    row.innerHTML = `
+                        <td class="p-4">${item.query}</td>
+                        <td class="p-4">${item.impressions.toLocaleString()}</td>
+                        <td class="p-4">${item.clicks}</td>
+                        <td class="p-4">${item.position.toFixed(2)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            };
+
+            document.querySelectorAll('#queriesTable th[data-sort]').forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortKey = header.dataset.sort;
+                    const order = (currentSort.key === sortKey && currentSort.order === 'desc') ? 'asc' : 'desc';
+                    currentSort = { key: sortKey, order: order };
+                    renderTable();
+                });
+            });
+            renderTable();
+
+            document.querySelectorAll('.accordion-header').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('span');
+
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        document.querySelectorAll('.accordion-content').forEach(item => {
+                            item.style.maxHeight = null;
+                            if (item.previousElementSibling.querySelector('span')) {
+                                item.previousElementSibling.querySelector('span').style.transform = 'rotate(0deg)';
+                            }
+                        });
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
